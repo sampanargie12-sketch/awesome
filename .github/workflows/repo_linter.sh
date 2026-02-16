@@ -1,22 +1,81 @@
-#!/bin/bash
+54ea0eaa2499f02fdb1cc32fbbf78dfcb7df9b19<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Philippines AI Voice Interface</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; padding: 50px; background: #f4f4f9; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        textarea { width: 100%; height: 100px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; padding: 10px; box-sizing: border-box; }
+        select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; cursor: pointer; }
+        button { background: #007bff; color: white; border: none; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        .status { font-size: 0.8rem; color: #666; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
 
-# Find the repo in the git diff and then set it to an env variables.
-REPO_TO_LINT=$(
-	git diff origin/main -- readme.md |
-	# Look for changes (indicated by lines starting with +).
-	grep ^+ |
-	# Get the line that includes the readme.
-	grep -Eo 'https.*#readme' |
-	# Get just the URL.
-	sed 's/#readme//')
+<div class="card">
+    <h2>Pinoy GPT Voice</h2>
+    <p>Select a Filipino or English voice:</p>
+    
+    <textarea id="textInput">Kamusta! Ako ang iyong AI assistant. Paano kita matutulungan ngayon?</textarea>
+    
+    <select id="voiceSelect">
+        <option value="">Loading voices...</option>
+    </select>
 
-# If there's no repo found, exit quietly.
-if [ -z "$REPO_TO_LINT" ]; then
-	echo "No new link found in the format:  https://....#readme"
-else
-	echo "Cloning $REPO_TO_LINT"
-	mkdir cloned
-	cd cloned
-	git clone "$REPO_TO_LINT" .
-	npx awesome-lint
-fi
+    <button onclick="speak()">Play Voice</button>
+    <div class="status">Web Speech API Interface</div>
+</div>
+
+<script>
+    const synth = window.speechSynthesis;
+    const voiceSelect = document.querySelector('#voiceSelect');
+    let voices = [];
+
+    function populateVoiceList() {
+        voices = synth.getVoices();
+        voiceSelect.innerHTML = '';
+        
+        // Filter for Philippine English (en-PH) or Tagalog (tl-PH)
+        const localVoices = voices.filter(v => v.lang.includes('PH') || v.lang.includes('tl'));
+        
+        if(localVoices.length === 0) {
+            const opt = document.createElement('option');
+            opt.textContent = "No PH voices found (Using System Default)";
+            voiceSelect.appendChild(opt);
+        }
+
+        voices.forEach((voice) => {
+            const option = document.createElement('option');
+            option.textContent = `${voice.name} (${voice.lang})`;
+            option.setAttribute('data-lang', voice.lang);
+            option.setAttribute('data-name', voice.name);
+            voiceSelect.appendChild(option);
+        });
+    }
+
+    populateVoiceList();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+
+    function speak() {
+        if (synth.speaking) return;
+        const utterThis = new SpeechSynthesisUtterance(document.querySelector('#textInput').value);
+        const selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-name');
+        
+        utterThis.voice = voices.find(v => v.name === selectedOption);
+        
+        // Adjust these to mimic the "9.9666" style you are aiming for
+        utterThis.pitch = 1.0; 
+        utterThis.rate = 1.0; 
+
+        synth.speak(utterThis);
+    }
+</script>
+
+</body>
+</html>
